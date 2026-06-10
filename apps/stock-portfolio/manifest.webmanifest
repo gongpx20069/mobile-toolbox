@@ -1,0 +1,19 @@
+{
+  "name": "美股持仓看板",
+  "short_name": "美股持仓",
+  "description": "适合手机常亮展示的美股持仓 PWA 看板。",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#07111f",
+  "theme_color": "#07111f",
+  "orientation": "landscape",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

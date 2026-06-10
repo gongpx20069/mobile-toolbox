@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#07111f" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="美股持仓" />
+    <title>美股持仓看板</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/icon.svg" />
+    <link rel="stylesheet" href="src/styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="app-bar">
+        <div>
+          <p class="eyebrow">US Portfolio</p>
+          <h1>持仓</h1>
+          <p id="statusText" class="subtle">行情尚未刷新</p>
+        </div>
+        <div class="top-actions">
+          <button id="refreshButton" class="button" type="button">刷新</button>
+          <button id="wakeLockButton" class="button ghost" type="button">常亮</button>
+        </div>
+      </header>
+
+      <section class="summary-grid" aria-label="组合概览">
+        <article class="summary-card">
+          <span>总市值</span>
+          <strong id="totalValue">$--</strong>
+        </article>
+        <article class="summary-card">
+          <span>总成本</span>
+          <strong id="totalCost">$--</strong>
+        </article>
+        <article class="summary-card">
+          <span>持仓盈亏</span>
+          <strong id="totalPnl">$--</strong>
+        </article>
+        <article class="summary-card">
+          <span>日内变动</span>
+          <strong id="dayChange">$--</strong>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">
+          <h2>持仓明细</h2>
+        </div>
+
+        <details class="edit-panel">
+          <summary>编辑持仓</summary>
+          <form id="holdingForm" class="holding-form">
+            <label>
+              股票代码
+              <input id="symbolInput" name="symbol" placeholder="AAPL" autocomplete="off" required />
+            </label>
+            <label>
+              数量
+              <input id="sharesInput" name="shares" type="number" inputmode="decimal" min="0" step="0.0001" placeholder="10" required />
+            </label>
+            <label>
+              成本价
+              <input id="costInput" name="cost" type="number" inputmode="decimal" min="0" step="0.0001" placeholder="150" required />
+            </label>
+            <button class="button primary" type="submit">保存</button>
+          </form>
+        </details>
+
+        <div id="holdingsBody" class="holdings-list" aria-live="polite"></div>
+
+        <div id="emptyState" class="empty-state">
+          <strong>先添加一只股票</strong>
+          <span>例如 AAPL、MSFT、NVDA、TSLA。数据只保存在本机浏览器。</span>
+        </div>
+      </section>
+    </main>
+
+    <script src="src/app.js" defer></script>
+  </body>
+</html>
