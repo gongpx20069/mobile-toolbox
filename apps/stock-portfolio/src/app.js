@@ -1,5 +1,5 @@
 const STORAGE_KEY = "stock-pwa-holdings";
-const REFRESH_INTERVAL_MS = 2_000;
+const REFRESH_INTERVAL_MS = 1_200;
 
 const state = {
   holdings: [],
@@ -7,8 +7,6 @@ const state = {
   wakeLock: null,
   refreshTimer: null,
   isRefreshing: false,
-  nextRefreshAt: null,
-  statusMessage: "行情尚未刷新",
 };
 
 const elements = {
@@ -20,6 +18,7 @@ const elements = {
   emptyState: document.querySelector("#emptyState"),
   refreshButton: document.querySelector("#refreshButton"),
   wakeLockButton: document.querySelector("#wakeLockButton"),
+  fullscreenButton: document.querySelector("#fullscreenButton"),
   statusText: document.querySelector("#statusText"),
   totalValue: document.querySelector("#totalValue"),
   totalCost: document.querySelector("#totalCost"),
@@ -92,18 +91,9 @@ function signedClass(value) {
   return value > 0 ? "positive" : "negative";
 }
 
-function formatTime(date) {
-  return date.toLocaleTimeString("zh-CN", { hour12: false });
-}
-
-function updateStatusText() {
-  const nextRefreshText = state.nextRefreshAt ? ` · 下次自动 ${formatTime(new Date(state.nextRefreshAt))}` : "";
-  elements.statusText.textContent = `${state.statusMessage}${nextRefreshText}`;
-}
-
-function setStatus(message) {
-  state.statusMessage = message;
-  updateStatusText();
+function setStatus(message = "") {
+  elements.statusText.textContent = message;
+  elements.statusText.hidden = !message;
 }
 
 function escapeHtml(value) {
@@ -188,7 +178,6 @@ async function refreshQuotes() {
   }
 
   state.isRefreshing = true;
-  state.nextRefreshAt = null;
   window.clearTimeout(state.refreshTimer);
   elements.refreshButton.disabled = true;
 
@@ -198,13 +187,9 @@ async function refreshQuotes() {
       return;
     }
 
-    setStatus("正在刷新腾讯行情...");
     const quotes = await loadTencentQuotes(state.holdings.map((holding) => holding.symbol));
     quotes.forEach((quote) => state.quotes.set(quote.symbol, quote));
-    const time = formatTime(new Date());
-    setStatus(quotes.length
-      ? `已刷新 ${quotes.length} 只股票 · ${time}`
-      : "未获取到行情，请检查股票代码");
+    setStatus(quotes.length ? "" : "未获取到行情，请检查股票代码");
   } catch (error) {
     console.error(error);
     setStatus(error.message);
@@ -311,7 +296,7 @@ function render() {
 
 async function toggleWakeLock() {
   if (!("wakeLock" in navigator)) {
-    elements.statusText.textContent = "当前浏览器不支持网页常亮，请使用系统常亮设置";
+    setStatus("当前浏览器不支持网页常亮，请使用系统常亮设置");
     return;
   }
 
@@ -331,7 +316,30 @@ async function toggleWakeLock() {
     });
   } catch (error) {
     console.error(error);
-    elements.statusText.textContent = "常亮开启失败，请确认浏览器权限或系统设置";
+    setStatus("常亮开启失败，请确认浏览器权限或系统设置");
+  }
+}
+
+function updateFullscreenButton() {
+  elements.fullscreenButton.textContent = document.fullscreenElement ? "退出全屏" : "全屏";
+}
+
+async function toggleFullscreen() {
+  if (!document.documentElement.requestFullscreen || !document.exitFullscreen) {
+    setStatus("当前浏览器不支持网页全屏，请尝试添加到主屏幕使用");
+    return;
+  }
+
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else {
+      await document.documentElement.requestFullscreen();
+    }
+    updateFullscreenButton();
+  } catch (error) {
+    console.error(error);
+    setStatus("全屏切换失败，请确认浏览器权限或手动添加到主屏幕");
   }
 }
 
@@ -343,7 +351,7 @@ function bindEvents() {
     const cost = Number(elements.costInput.value);
 
     if (!symbol || !Number.isFinite(shares) || shares <= 0 || !Number.isFinite(cost) || cost < 0) {
-      elements.statusText.textContent = "请填写有效的股票代码、数量和成本价";
+      setStatus("请填写有效的股票代码、数量和成本价");
       return;
     }
 
@@ -360,6 +368,8 @@ function bindEvents() {
 
   elements.refreshButton.addEventListener("click", refreshQuotes);
   elements.wakeLockButton.addEventListener("click", toggleWakeLock);
+  elements.fullscreenButton.addEventListener("click", toggleFullscreen);
+  document.addEventListener("fullscreenchange", updateFullscreenButton);
 
   document.addEventListener("visibilitychange", async () => {
     if (document.visibilityState !== "visible") {
@@ -385,13 +395,12 @@ function registerServiceWorker() {
 
 function scheduleAutoRefresh(delay = REFRESH_INTERVAL_MS) {
   window.clearTimeout(state.refreshTimer);
-  state.nextRefreshAt = Date.now() + delay;
   state.refreshTimer = window.setTimeout(refreshQuotes, delay);
-  updateStatusText();
 }
 
 loadHoldings();
 bindEvents();
 render();
+updateFullscreenButton();
 refreshQuotes();
 registerServiceWorker();
