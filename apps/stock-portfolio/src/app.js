@@ -1,5 +1,5 @@
 const STORAGE_KEY = "stock-pwa-holdings";
-const REFRESH_INTERVAL_MS = 60_000;
+const REFRESH_INTERVAL_MS = 2_000;
 
 const state = {
   holdings: [],
